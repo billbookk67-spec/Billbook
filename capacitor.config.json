@@ -1,0 +1,6 @@
+{
+  "appId": "com.billbook.app",
+  "appName": "BillBook",
+  "webDir": "www",
+  "bundledWebRuntime": false
+}

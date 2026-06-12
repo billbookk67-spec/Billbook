@@ -1,0 +1,23 @@
+# Root node modules
+node_modules/
+
+# Local configuration files
+.env
+.env.local
+
+# Android build outputs and IDE files
+android/.gradle/
+android/app/build/
+android/build/
+android/local.properties
+.gradle/
+build/
+*.log
+
+# Editor configurations
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
