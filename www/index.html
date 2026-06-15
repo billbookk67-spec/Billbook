@@ -18,8 +18,157 @@
   <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
+  <!-- Login / Auth Gate Screen -->
+  <div id="view-login" class="login-container">
+    
+    <!-- 1. Welcome / Onboarding Card -->
+    <div id="login-card-welcome" class="login-card">
+      <div class="login-logo" style="margin-top: 10px; margin-bottom: 20px;">
+        <div class="logo-icon" style="width: 50px; height: 50px;">
+          <i data-lucide="wallet" style="width: 26px; height: 26px;"></i>
+        </div>
+      </div>
+      <h2 style="text-align: center; font-size: 1.8rem; margin-bottom: 8px; font-weight: 800; background: linear-gradient(135deg, var(--color-text-main), var(--color-text-muted)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Welcome to BillBook</h2>
+      <p class="login-subtitle" style="margin-bottom: 30px; line-height: 1.5; padding: 0 10px; text-align: center;">Simplify your invoicing, track your inventory, and manage client balances effortlessly.</p>
+      
+      <!-- Primary Action: Sign in with Google -->
+      <button type="button" id="btn-google-welcome" class="btn-google" style="margin-bottom: 16px; width: 100%;">
+        <svg class="google-icon" viewBox="0 0 24 24" width="18" height="18" xmlns="http://www.w3.org/2000/svg">
+          <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+          <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+          <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" fill="#FBBC05"/>
+          <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" fill="#EA4335"/>
+        </svg>
+        <span>Sign in with Google</span>
+      </button>
+
+      <div class="login-divider" style="margin-top: 10px; margin-bottom: 20px;">
+        <span>or use email</span>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 12px; width: 100%;">
+        <button type="button" id="btn-welcome-signup" class="btn btn-primary btn-full" style="margin: 0; padding: 12px; font-weight: 600;">
+          Create New Account
+        </button>
+        <button type="button" id="btn-welcome-login" class="btn btn-secondary btn-full" style="margin: 0; padding: 12px; font-weight: 600; border: 1px solid var(--color-border); background: transparent; color: var(--color-text-main);">
+          Sign In (Existing User)
+        </button>
+      </div>
+    </div>
+
+    <!-- 2. Email Sign-In Card -->
+    <div id="login-card-signin" class="login-card" style="display: none;">
+      <div class="login-logo">
+        <div class="logo-icon">
+          <i data-lucide="wallet"></i>
+        </div>
+        <h2>BillBook</h2>
+      </div>
+      <p class="login-subtitle">Sign in to access your invoicing dashboard</p>
+      
+      <form id="form-login" class="login-form">
+        <div class="form-group">
+          <label for="login-email">Email Address</label>
+          <input type="email" id="login-email" placeholder="intern@sparktech.io" required>
+        </div>
+        <div class="form-group">
+          <label for="login-password">Password</label>
+          <input type="password" id="login-password" placeholder="••••••••" required>
+        </div>
+        <button type="submit" class="btn btn-primary btn-full" style="margin-top: 15px;">Sign In</button>
+      </form>
+
+      <p class="auth-toggle-text">Don't have an account? <a href="#" id="link-show-signup">Sign Up</a></p>
+      <p class="auth-toggle-text" style="margin-top: 12px;"><a href="#" id="link-signin-back" style="color: var(--color-text-muted); font-size: 0.8rem;">← Back to Welcome</a></p>
+    </div>
+
+    <!-- 3. Email Sign-Up Card -->
+    <div id="login-card-signup" class="login-card" style="display: none;">
+      <div class="login-logo">
+        <div class="logo-icon">
+          <i data-lucide="wallet"></i>
+        </div>
+        <h2>BillBook</h2>
+      </div>
+      <p class="login-subtitle">Create a new business manager account</p>
+      
+      <form id="form-signup" class="login-form">
+        <div class="form-group">
+          <label for="signup-name">Full Name</label>
+          <input type="text" id="signup-name" placeholder="John Doe" required>
+        </div>
+        <div class="form-group">
+          <label for="signup-email">Email Address</label>
+          <input type="email" id="signup-email" placeholder="john@example.com" required>
+        </div>
+        <div class="form-group">
+          <label for="signup-password">Password</label>
+          <input type="password" id="signup-password" placeholder="••••••••" required>
+        </div>
+        <button type="submit" class="btn btn-primary btn-full" style="margin-top: 15px;">Create Account</button>
+      </form>
+
+      <p class="auth-toggle-text">Already have an account? <a href="#" id="link-show-signin">Log In</a></p>
+      <p class="auth-toggle-text" style="margin-top: 12px;"><a href="#" id="link-signup-back" style="color: var(--color-text-muted); font-size: 0.8rem;">← Back to Welcome</a></p>
+    </div>
+
+    <!-- 4. Google Account Picker Card -->
+    <div id="login-card-google" class="login-card google-selector-card" style="display: none;">
+      <div class="google-logo-header">
+        <svg viewBox="0 0 24 24" width="24" height="24" xmlns="http://www.w3.org/2000/svg" style="width:28px; height:28px; margin-bottom: 8px;">
+          <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+          <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+          <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" fill="#FBBC05"/>
+          <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" fill="#EA4335"/>
+        </svg>
+        <h3>Choose an account</h3>
+        <p>to continue to <span>BillBook</span></p>
+      </div>
+
+      <div class="google-accounts-container" id="google-accounts-list-page" style="margin-top: 15px; margin-bottom: 15px;">
+        <!-- Rendered dynamically by JS -->
+      </div>
+      
+      <div class="google-selector-footer" style="margin-top: 10px; display: flex; flex-direction: column; align-items: center; gap: 10px;">
+        <p style="font-size: 0.7rem; color: var(--color-text-muted); text-align: center; line-height: 1.4;">To continue, Google will share your name, email address, language preference, and profile picture with BillBook.</p>
+        <button type="button" class="text-btn" id="btn-cancel-google" style="font-size: 0.85rem; color: var(--color-primary); background: none; border: none; cursor: pointer; font-weight: 600;">Back to Welcome</button>
+      </div>
+    </div>
+
+    <!-- 5. Google Custom Sign-In Card (Use Another Account) -->
+    <div id="login-card-google-custom" class="login-card google-selector-card" style="display: none;">
+      <div class="google-logo-header">
+        <svg viewBox="0 0 24 24" width="24" height="24" xmlns="http://www.w3.org/2000/svg" style="width:28px; height:28px; margin-bottom: 8px;">
+          <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+          <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+          <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" fill="#FBBC05"/>
+          <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" fill="#EA4335"/>
+        </svg>
+        <h3>Sign in</h3>
+        <p>with your Google Account</p>
+      </div>
+
+      <form id="form-google-custom" class="login-form" style="margin-top: 15px; padding: 0;">
+        <div class="form-group">
+          <label for="google-custom-email">Email or Phone</label>
+          <input type="email" id="google-custom-email" placeholder="example@gmail.com" required>
+        </div>
+        <div class="form-group">
+          <label for="google-custom-password">Password</label>
+          <input type="password" id="google-custom-password" placeholder="••••••••" required>
+        </div>
+        <button type="submit" class="btn btn-primary btn-full">Next</button>
+      </form>
+      
+      <div class="google-selector-footer" style="margin-top: 16px; display: flex; justify-content: center;">
+        <button type="button" class="text-btn" id="btn-back-google-list" style="font-size: 0.85rem; color: var(--color-primary); background: none; border: none; cursor: pointer; font-weight: 600;">Back to Account List</button>
+      </div>
+    </div>
+
+  </div>
+
   <!-- App Container -->
-  <div id="app" class="app-container">
+  <div id="app" class="app-container" style="display: none;">
     
     <!-- Top Header -->
     <header class="app-header">
@@ -368,6 +517,20 @@
                   <i data-lucide="trash-2"></i> Wipe All Data
                 </button>
               </div>
+            </div>
+          </div>
+          
+          <!-- Account settings card -->
+          <div class="card" style="grid-column: 1 / -1;">
+            <div class="card-header">
+              <i data-lucide="log-out"></i>
+              <h3>Account Session</h3>
+            </div>
+            <div class="settings-actions" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+              <p class="section-desc" style="margin-bottom: 0;">You are currently signed in. You can log out to switch accounts.</p>
+              <button id="btn-logout" class="btn btn-secondary btn-with-icon">
+                <i data-lucide="log-out"></i> Log Out
+              </button>
             </div>
           </div>
         </div>

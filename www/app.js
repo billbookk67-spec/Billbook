@@ -5,7 +5,7 @@
 // Configure your backend API Base URL here
 // For local testing: http://localhost:5000/api
 // For production: change to your deployed cloud URL (e.g., https://yourdomain.com/api)
-const API_URL = 'http://localhost:5000/api';
+const API_URL = 'https://billing-app-ccvg.onrender.com/api';
 
 // Helper to safely render icons if lucide is available (offline resilience)
 function safeCreateIcons() {
@@ -24,8 +24,185 @@ let state = {
   profile: {}
 };
 
+// Authentication State Management
+const SESSION_KEY = 'bb_session';
+
+// Setup Auth Gate Event Listeners and checks
+function setupAuthGate() {
+  const session = localStorage.getItem(SESSION_KEY);
+  const loginView = document.getElementById('view-login');
+  const appContainer = document.getElementById('app');
+  
+  const cardWelcome = document.getElementById('login-card-welcome');
+  const cardSignIn = document.getElementById('login-card-signin');
+  const cardSignUp = document.getElementById('login-card-signup');
+  const cardGoogle = document.getElementById('login-card-google');
+  const cardGoogleCustom = document.getElementById('login-card-google-custom');
+
+  // Sub-card navigation helper
+  function showCard(activeCard) {
+    [cardWelcome, cardSignIn, cardSignUp, cardGoogle, cardGoogleCustom].forEach(card => {
+      card.style.display = card === activeCard ? 'flex' : 'none';
+    });
+  }
+
+  if (session) {
+    // User is logged in
+    loginView.style.display = 'none';
+    appContainer.style.display = 'flex';
+    // Initialize DB loading and UI population
+    loadDB().then(() => {
+      refreshAllUI();
+    });
+  } else {
+    // User is logged out
+    loginView.style.display = 'flex';
+    appContainer.style.display = 'none';
+    showCard(cardWelcome); // Default to welcome onboarding screen
+  }
+
+  // 1. Welcome Screen buttons
+  document.getElementById('btn-google-welcome').onclick = () => {
+    showCard(cardGoogle);
+    renderGoogleAccounts(cardGoogle, cardSignIn, cardGoogleCustom);
+  };
+
+  document.getElementById('btn-welcome-signup').onclick = () => {
+    showCard(cardSignUp);
+  };
+
+  document.getElementById('btn-welcome-login').onclick = () => {
+    showCard(cardSignIn);
+  };
+
+  // 2. Back Navigation to Welcome Screen
+  document.getElementById('link-signin-back').onclick = (e) => {
+    e.preventDefault();
+    showCard(cardWelcome);
+  };
+
+  document.getElementById('link-signup-back').onclick = (e) => {
+    e.preventDefault();
+    showCard(cardWelcome);
+  };
+
+  // 3. Toggles between Sign In and Sign Up
+  document.getElementById('link-show-signup').onclick = (e) => {
+    e.preventDefault();
+    showCard(cardSignUp);
+  };
+  
+  document.getElementById('link-show-signin').onclick = (e) => {
+    e.preventDefault();
+    showCard(cardSignIn);
+  };
+
+  // 4. Email Sign-In Submission
+  const loginForm = document.getElementById('form-login');
+  loginForm.onsubmit = (e) => {
+    e.preventDefault();
+    const email = document.getElementById('login-email').value;
+    // Mock login success
+    localStorage.setItem(SESSION_KEY, email);
+    setupAuthGate();
+  };
+
+  // 5. Email Sign-Up Submission
+  const signupForm = document.getElementById('form-signup');
+  signupForm.onsubmit = (e) => {
+    e.preventDefault();
+    const name = document.getElementById('signup-name').value;
+    const email = document.getElementById('signup-email').value;
+    // Mock registration success
+    alert(`Account registered successfully for ${name}! Please log in.`);
+    // Autofill email in sign-in card
+    document.getElementById('login-email').value = email;
+    showCard(cardSignIn);
+  };
+
+  // 6. Back/Cancel buttons inside Google selector views
+  document.getElementById('btn-cancel-google').onclick = () => {
+    showCard(cardWelcome);
+  };
+
+  document.getElementById('btn-back-google-list').onclick = () => {
+    showCard(cardGoogle);
+  };
+
+  // 7. Custom Google Email Login form submit
+  const googleCustomForm = document.getElementById('form-google-custom');
+  googleCustomForm.onsubmit = (e) => {
+    e.preventDefault();
+    const email = document.getElementById('google-custom-email').value;
+    localStorage.setItem(SESSION_KEY, email);
+    setupAuthGate();
+  };
+
+  // 8. Settings Logout Button
+  const logoutBtn = document.getElementById('btn-logout');
+  if (logoutBtn) {
+    logoutBtn.onclick = () => {
+      if (confirm('Are you sure you want to log out of your session?')) {
+        localStorage.removeItem(SESSION_KEY);
+        setupAuthGate();
+      }
+    };
+  }
+}
+
+// Render Google Accounts List inside Auth Gate Card
+function renderGoogleAccounts(cardGoogle, cardSignIn, cardGoogleCustom) {
+  const listContainer = document.getElementById('google-accounts-list-page');
+  
+  const mockAccounts = [
+    { name: 'Nithin Kumar', email: 'nithin.k@gmail.com', initials: 'NK' },
+    { name: 'Intern Spark', email: 'intern@sparktech.io', initials: 'IS' }
+  ];
+
+  listContainer.innerHTML = '';
+  
+  // Render default accounts list
+  mockAccounts.forEach(acc => {
+    const item = document.createElement('div');
+    item.className = 'google-account-item';
+    item.innerHTML = `
+      <div class="google-avatar">${acc.initials}</div>
+      <div class="google-info">
+        <span class="google-name">${acc.name}</span>
+        <span class="google-email">${acc.email}</span>
+      </div>
+    `;
+    item.onclick = () => {
+      localStorage.setItem(SESSION_KEY, acc.email);
+      setupAuthGate();
+    };
+    listContainer.appendChild(item);
+  });
+
+  // Render "Use another account" button at the bottom of the list
+  const useAnotherItem = document.createElement('div');
+  useAnotherItem.className = 'google-account-item';
+  useAnotherItem.style.borderStyle = 'dashed';
+  useAnotherItem.innerHTML = `
+    <div class="google-avatar" style="background: rgba(255,255,255,0.05); color: var(--color-text-muted);">+</div>
+    <div class="google-info" style="justify-content: center;">
+      <span class="google-name" style="color: var(--color-primary); font-weight: 600;">Use another account</span>
+    </div>
+  `;
+  useAnotherItem.onclick = () => {
+    // Clear inputs and switch card
+    document.getElementById('form-google-custom').reset();
+    cardGoogleCustom.style.display = 'flex';
+    cardGoogle.style.display = 'none';
+  };
+  listContainer.appendChild(useAnotherItem);
+}
+
 // Asynchronous DB sync from Backend REST API
 async function loadDB() {
+  // If not logged in, skip fetching
+  if (!localStorage.getItem(SESSION_KEY)) return;
+
   try {
     const [productsRes, customersRes, invoicesRes, profileRes] = await Promise.all([
       fetch(`${API_URL}/products`),
@@ -131,7 +308,8 @@ async function loadDemoData() {
 
 // DOM Events & Navigation Router
 document.addEventListener('DOMContentLoaded', async () => {
-  await loadDB();
+  // Initialize Auth Gate
+  setupAuthGate();
   
   // Create icons initially
   safeCreateIcons();
