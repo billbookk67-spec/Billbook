@@ -780,12 +780,12 @@
   <!-- D. Invoice Details & Print Preview Modal -->
   <div id="modal-invoice-detail" class="modal-overlay">
     <div class="modal-box invoice-preview-box">
-      <div class="modal-header no-print">
-        <h3>Invoice Preview</h3>
-        <div class="preview-actions">
-          <button id="btn-print-invoice" class="btn btn-primary btn-with-icon"><i data-lucide="printer"></i> Print / PDF</button>
-          <button id="btn-share-invoice" class="btn btn-secondary btn-with-icon"><i data-lucide="share-2"></i> Share Link</button>
-          <button class="modal-close btn-close-invoice-detail"><i data-lucide="x"></i></button>
+      <div class="modal-header no-print" style="display: flex; justify-content: space-between; align-items: center; width: 100%; border-bottom: 1px solid var(--color-border); padding-bottom: 15px; margin-bottom: 15px;">
+        <button class="back-btn btn-close-invoice-detail" style="background: none; border: none; color: var(--color-primary); display: flex; align-items: center; gap: 4px; cursor: pointer; font-size: 0.95rem; font-weight: 600;"><i data-lucide="chevron-left"></i> Back</button>
+        <h3 style="margin: 0; font-size: 1.15rem; font-weight: 700;">Invoice Preview</h3>
+        <div class="preview-actions" style="display: flex; gap: 8px;">
+          <button id="btn-print-invoice" class="btn btn-primary btn-with-icon" style="padding: 8px 12px; font-size: 0.85rem;"><i data-lucide="printer"></i> Print / PDF</button>
+          <button id="btn-share-invoice" class="btn btn-secondary btn-with-icon" style="padding: 8px 12px; font-size: 0.85rem;"><i data-lucide="share-2"></i> Share</button>
         </div>
       </div>
       
