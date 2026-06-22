@@ -945,6 +945,10 @@ function setupInvoiceBuilderListeners() {
 }
 
 function openInvoiceBuilder(invoiceId = null) {
+  if (invoiceId && typeof invoiceId !== 'string') {
+    invoiceId = null;
+  }
+
   if (state.customers.length === 0) {
     alert('Please add a client/customer before creating an invoice!');
     document.querySelector('.app-nav [data-view="view-customers"]').click();
@@ -1522,8 +1526,9 @@ document.getElementById('file-import').addEventListener('change', (e) => {
 
 // Helpers
 function formatCurrency(amount) {
+  const val = parseFloat(amount) || 0;
   const symbol = state.profile.currency || '₹';
-  return symbol + ' ' + amount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return symbol + ' ' + val.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
 function formatDate(dateStr) {
