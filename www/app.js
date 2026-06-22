@@ -840,6 +840,7 @@ function refreshInvoicesTable() {
       <td>
         <div class="row-actions">
           <button class="action-btn btn-view-invoice" data-id="${inv.id}" title="View Details"><i data-lucide="eye"></i></button>
+          <button class="action-btn btn-edit-invoice" data-id="${inv.id}" title="Edit Invoice"><i data-lucide="edit"></i></button>
           <button class="action-btn btn-toggle-status" data-id="${inv.id}" title="Toggle status"><i data-lucide="refresh-cw"></i></button>
           <button class="action-btn btn-delete btn-delete-invoice" data-id="${inv.id}" title="Delete"><i data-lucide="trash-2"></i></button>
         </div>
@@ -854,6 +855,13 @@ function refreshInvoicesTable() {
     btn.addEventListener('click', () => {
       const id = btn.getAttribute('data-id');
       viewInvoiceDetail(id);
+    });
+  });
+
+  document.querySelectorAll('.btn-edit-invoice').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.getAttribute('data-id');
+      openInvoiceBuilder(id);
     });
   });
 
@@ -936,7 +944,7 @@ function setupInvoiceBuilderListeners() {
   document.getElementById('inv-discount-percent').addEventListener('change', calculateInvoiceTotals);
 }
 
-function openInvoiceBuilder() {
+function openInvoiceBuilder(invoiceId = null) {
   if (state.customers.length === 0) {
     alert('Please add a client/customer before creating an invoice!');
     document.querySelector('.app-nav [data-view="view-customers"]').click();
@@ -951,27 +959,68 @@ function openInvoiceBuilder() {
   const overlay = document.getElementById('modal-invoice');
   overlay.style.display = 'block';
 
-  const dateStr = new Date().toISOString().split('T')[0];
-  document.getElementById('inv-date').value = dateStr;
-  
-  const future = new Date();
-  future.setDate(future.getDate() + 15);
-  document.getElementById('inv-due-date').value = future.toISOString().split('T')[0];
+  const titleEl = document.getElementById('invoice-builder-title');
+  const editIdInput = document.getElementById('inv-edit-id');
 
-  const prefix = `INV-${new Date().getFullYear()}-`;
-  const pad = '0000';
-  const lastIndex = state.invoices.length + 1;
-  const invNumber = prefix + (pad + lastIndex).slice(-4);
-  document.getElementById('inv-number').value = invNumber;
+  if (invoiceId) {
+    // EDIT MODE
+    titleEl.innerText = 'Edit Invoice';
+    editIdInput.value = invoiceId;
 
-  document.getElementById('inv-discount-percent').value = 0;
-  document.getElementById('inv-notes').value = 'Thank you for your business! Payment is due within 15 days.';
-  document.getElementById('inv-payment-status').value = 'Unpaid';
-  document.getElementById('inv-payment-mode').value = 'UPI';
+    const inv = state.invoices.find(invoice => invoice.id === invoiceId);
+    if (!inv) {
+      alert('Invoice details not found.');
+      closeInvoiceBuilder();
+      return;
+    }
 
-  populateCustomerSelect();
-  document.getElementById('invoice-items-tbody').innerHTML = '';
-  addInvoiceItemRow();
+    document.getElementById('inv-number').value = inv.number;
+    document.getElementById('inv-date').value = inv.date;
+    document.getElementById('inv-due-date').value = inv.dueDate;
+    document.getElementById('inv-discount-percent').value = inv.discountPercent;
+    document.getElementById('inv-notes').value = inv.notes || '';
+    document.getElementById('inv-payment-status').value = inv.status;
+    document.getElementById('inv-payment-mode').value = inv.paymentMode;
+
+    populateCustomerSelect(inv.customerId);
+    
+    // Clear and fill item rows
+    const tbody = document.getElementById('invoice-items-tbody');
+    tbody.innerHTML = '';
+    
+    inv.items.forEach(item => {
+      addInvoiceItemRow(item.productId, item.qty, item.price, item.taxRate);
+    });
+
+  } else {
+    // NEW INVOICE MODE
+    titleEl.innerText = 'New Invoice';
+    editIdInput.value = '';
+
+    const dateStr = new Date().toISOString().split('T')[0];
+    document.getElementById('inv-date').value = dateStr;
+    
+    const future = new Date();
+    future.setDate(future.getDate() + 15);
+    document.getElementById('inv-due-date').value = future.toISOString().split('T')[0];
+
+    const prefix = `INV-${new Date().getFullYear()}-`;
+    const pad = '0000';
+    const lastIndex = state.invoices.length + 1;
+    const invNumber = prefix + (pad + lastIndex).slice(-4);
+    document.getElementById('inv-number').value = invNumber;
+
+    document.getElementById('inv-discount-percent').value = 0;
+    document.getElementById('inv-notes').value = 'Thank you for your business! Payment is due within 15 days.';
+    document.getElementById('inv-payment-status').value = 'Unpaid';
+    document.getElementById('inv-payment-mode').value = 'UPI';
+
+    populateCustomerSelect();
+    document.getElementById('invoice-items-tbody').innerHTML = '';
+    addInvoiceItemRow();
+  }
+
+  calculateInvoiceTotals();
 }
 
 function closeInvoiceBuilder() {
@@ -993,14 +1042,16 @@ function populateCustomerSelect(selectedId = '') {
   });
 }
 
-function addInvoiceItemRow() {
+function addInvoiceItemRow(productId = '', qty = 1, price = 0, taxRate = 0) {
   const tbody = document.getElementById('invoice-items-tbody');
   const tr = document.createElement('tr');
   const rowIndex = tbody.children.length;
   
   let productOptions = '<option value="" disabled selected>-- Choose Product --</option>';
   state.products.forEach(p => {
-    productOptions += `<option value="${p.id}" ${p.stock <= 0 ? 'disabled' : ''}>${p.name} (SKU: ${p.sku} | Left: ${p.stock})</option>`;
+    const isSelected = p.id === productId;
+    const isOutOfStock = p.stock <= 0 && !isSelected;
+    productOptions += `<option value="${p.id}" ${isOutOfStock ? 'disabled' : ''} ${isSelected ? 'selected' : ''}>${p.name} (SKU: ${p.sku} | Left: ${p.stock})</option>`;
   });
 
   tr.innerHTML = `
@@ -1010,13 +1061,13 @@ function addInvoiceItemRow() {
       </select>
     </td>
     <td>
-      <input type="number" class="item-qty" data-row="${rowIndex}" value="1" min="1" required>
+      <input type="number" class="item-qty" data-row="${rowIndex}" value="${qty}" min="1" required>
     </td>
     <td>
-      <input type="number" class="item-price" data-row="${rowIndex}" step="0.01" min="0" required>
+      <input type="number" class="item-price" data-row="${rowIndex}" value="${price || ''}" step="0.01" min="0" required>
     </td>
     <td>
-      <input type="number" class="item-tax" data-row="${rowIndex}" min="0" max="100" value="0">
+      <input type="number" class="item-tax" data-row="${rowIndex}" min="0" max="100" value="${taxRate}">
     </td>
     <td>
       <span class="item-row-total" data-row="${rowIndex}">₹0.00</span>
@@ -1036,6 +1087,14 @@ function addInvoiceItemRow() {
   const priceEl = tr.querySelector('.item-price');
   const taxEl = tr.querySelector('.item-tax');
   const deleteBtn = tr.querySelector('.btn-delete-row');
+
+  // Set initial max qty based on product stock
+  if (productId) {
+    const prod = state.products.find(p => p.id === productId);
+    if (prod) {
+      qtyEl.max = prod.stock + (qty || 0); // Include currently allocated qty
+    }
+  }
 
   selectEl.addEventListener('change', () => {
     const prodId = selectEl.value;
@@ -1058,6 +1117,9 @@ function addInvoiceItemRow() {
     reindexRows();
     calculateInvoiceTotals();
   });
+
+  // Calculate row total initially
+  updateRowTotal(rowIndex);
 }
 
 function reindexRows() {
@@ -1141,6 +1203,9 @@ async function saveInvoice() {
   const status = document.getElementById('inv-payment-status').value;
   const notes = document.getElementById('inv-notes').value;
   
+  const editId = document.getElementById('inv-edit-id').value;
+  const isEdit = !!editId;
+
   if (!customerId) {
     alert('Please select a customer.');
     return;
@@ -1154,6 +1219,15 @@ async function saveInvoice() {
   if (rows.length === 0) {
     alert('Please add at least one item row.');
     return;
+  }
+
+  // Get old invoice items to calculate true available stock for edits
+  let oldInvoiceItems = [];
+  if (isEdit) {
+    const oldInv = state.invoices.find(invoice => invoice.id === editId);
+    if (oldInv) {
+      oldInvoiceItems = oldInv.items;
+    }
   }
 
   let items = [];
@@ -1178,8 +1252,13 @@ async function saveInvoice() {
     const prod = state.products.find(p => p.id === productId);
     if (!prod) return;
 
-    if (prod.stock < qty) {
-      alert(`Insufficient stock for "${prod.name}" (Requested: ${qty}, Stock: ${prod.stock})`);
+    // True available stock = current stock + what was already allocated to this invoice previously
+    const oldItem = oldInvoiceItems.find(item => item.productId === productId);
+    const oldQty = oldItem ? oldItem.qty : 0;
+    const availableStock = prod.stock + oldQty;
+
+    if (availableStock < qty) {
+      alert(`Insufficient stock for "${prod.name}" (Requested: ${qty}, Available: ${availableStock})`);
       stockCheckPassed = false;
       return;
     }
@@ -1213,8 +1292,8 @@ async function saveInvoice() {
   const total = subtotal - discountAmount + taxAmount;
   const cust = state.customers.find(c => c.id === customerId);
 
-  const newInvoice = {
-    id: 'inv_' + Date.now(),
+  const invoiceData = {
+    id: isEdit ? editId : 'inv_' + Date.now(),
     number,
     date,
     dueDate,
@@ -1232,10 +1311,10 @@ async function saveInvoice() {
   };
 
   try {
-    const res = await fetch(`${API_URL}/invoices`, {
-      method: 'POST',
+    const res = await fetch(`${API_URL}/invoices${isEdit ? '/' + editId : ''}`, {
+      method: isEdit ? 'PUT' : 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(newInvoice)
+      body: JSON.stringify(invoiceData)
     });
 
     const data = await res.json();
@@ -1244,7 +1323,7 @@ async function saveInvoice() {
     await loadDB();
     closeInvoiceBuilder();
     refreshAllUI();
-    viewInvoiceDetail(newInvoice.id);
+    viewInvoiceDetail(invoiceData.id);
   } catch (err) {
     alert('Failed to save invoice: ' + err.message);
   }

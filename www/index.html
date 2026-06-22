@@ -646,11 +646,12 @@
       <!-- Top Action Bar -->
       <div class="builder-navbar">
         <button id="btn-close-invoice-builder" class="back-btn"><i data-lucide="chevron-left"></i> Back</button>
-        <h3>New Invoice</h3>
+        <h3 id="invoice-builder-title">New Invoice</h3>
         <button id="btn-save-invoice" class="btn btn-primary btn-with-icon"><i data-lucide="save"></i> Save Invoice</button>
       </div>
 
       <div class="builder-content">
+        <input type="hidden" id="inv-edit-id">
         <div class="builder-grid">
           
           <!-- Column 1: Metadata & Items -->

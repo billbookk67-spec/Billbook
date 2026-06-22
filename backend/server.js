@@ -234,6 +234,69 @@ app.post('/api/invoices', (req, res) => {
   });
 });
 
+// Update an Invoice completely (Edit Invoice)
+app.put('/api/invoices/:id', (req, res) => {
+  const { id } = req.params;
+  const {
+    number, date, dueDate, customerId, customerName, items,
+    subtotal, discountPercent, discountAmount, taxAmount, total, paymentMode, status, notes
+  } = req.body;
+
+  if (!customerId || !items || items.length === 0) {
+    return res.status(400).json({ error: 'Missing required invoice fields.' });
+  }
+
+  db.serialize(async () => {
+    try {
+      await dbQuery.run('BEGIN TRANSACTION');
+
+      // 1. Fetch the old invoice to get its items and restore old stock levels
+      const oldInvoice = await dbQuery.get('SELECT items FROM invoices WHERE id = ?', [id]);
+      if (!oldInvoice) {
+        throw new Error('Invoice to edit was not found.');
+      }
+      const oldItems = JSON.parse(oldInvoice.items);
+
+      // Restore old stock
+      for (const item of oldItems) {
+        await dbQuery.run('UPDATE products SET stock = stock + ? WHERE id = ?', [item.qty, item.productId]);
+      }
+
+      // 2. Validate new item stock and deduct new stock levels
+      for (const item of items) {
+        const prod = await dbQuery.get('SELECT stock, name FROM products WHERE id = ?', [item.productId]);
+        if (!prod) {
+          throw new Error(`Product ${item.name} not found in inventory.`);
+        }
+        if (prod.stock < item.qty) {
+          throw new Error(`Insufficient stock for "${prod.name}". Requested: ${item.qty}, Available: ${prod.stock}`);
+        }
+        // Deduct new stock
+        await dbQuery.run('UPDATE products SET stock = stock - ? WHERE id = ?', [item.qty, item.productId]);
+      }
+
+      // 3. Update the Invoice record
+      await dbQuery.run(
+        `UPDATE invoices 
+         SET number = ?, date = ?, dueDate = ?, customerId = ?, customerName = ?, items = ?,
+             subtotal = ?, discountPercent = ?, discountAmount = ?, taxAmount = ?, total = ?, paymentMode = ?, status = ?, notes = ?
+         WHERE id = ?`,
+        [
+          number, date, dueDate, customerId, customerName, JSON.stringify(items),
+          subtotal, discountPercent, discountAmount, taxAmount, total, paymentMode, status, notes,
+          id
+        ]
+      );
+
+      await dbQuery.run('COMMIT');
+      res.json({ message: 'Invoice updated and stocks adjusted successfully.' });
+    } catch (err) {
+      await dbQuery.run('ROLLBACK');
+      res.status(500).json({ error: err.message });
+    }
+  });
+});
+
 // Update Invoice status (Paid/Unpaid)
 app.patch('/api/invoices/:id/status', async (req, res) => {
   const { id } = req.params;
